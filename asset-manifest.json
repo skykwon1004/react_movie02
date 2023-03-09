@@ -1,8 +1,8 @@
 {
   "files": {
-    "main.js": "/react_movie_02/static/js/main.f83988f2.js",
-    "index.html": "/react_movie_02/index.html",
-    "main.f83988f2.js.map": "/react_movie_02/static/js/main.f83988f2.js.map"
+    "main.js": "/react_movie02/static/js/main.f83988f2.js",
+    "index.html": "/react_movie02/index.html",
+    "main.f83988f2.js.map": "/react_movie02/static/js/main.f83988f2.js.map"
   },
   "entrypoints": [
     "static/js/main.f83988f2.js"
