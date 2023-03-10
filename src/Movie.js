@@ -2,7 +2,11 @@ import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import { Link, Route, Routes, useParams } from "react-router-dom";
 import styled from "styled-components";
-import CommonStyle from './style/createGlobalStyle';
+import CommonStyle from './style/Grobal';
+import { BsX, BsArrowRight, BsArrowLeft } from "react-icons/bs";
+
+import MovieSlide from 'react-slick';
+import 'slick-carousel/slick/slick.css';
 
 //style 
 
@@ -45,7 +49,7 @@ color: #fff;
 background: rgba(0,0,0,0.5);
 padding: 20px;
 font-size: 14px;
-min-height: 150px;
+min-height: 130px;
 `
 
 const Header = styled.header`
@@ -94,9 +98,9 @@ border-radius: 2px;
 
 `
 
-const MoviePopWrapper = styled.div`
+const MoviePopWapper = styled.div`
 position: fixed;
-inset: 0 0 0 0;
+inset:  0 0 0 0;
 z-index: 999;
 background: rgba(0,0,0,0.5);
 `
@@ -105,13 +109,97 @@ const MoviePop = styled.div`
 position: absolute;
 inset: 50% auto auto 50%;
 transform: translate(-50%,-50%);
+
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+background: #020e32;
+color: #fff;
+
+width: 800px;
 `
 
+const MoviePopDesc = styled.div`
+position:relative;
+display: flex;
+flex-direction: column;
+padding: 50px;
+
+overflow: hidden;
+`
+
+const MoviePopDescTitle = styled.h3`
+font-size: 30px;
+font-weight: 700;
+margin: 0 0 30px 0;
+`
+const MoviePopDescDesc = styled.p`
+font-size: 14px;
+font-weight: 300;
+line-height: 1.414;
+`
+const MoviePopDescYear = styled.p`
+margin: auto 0 10px 0;
+font-size: 14px;
+font-weight: 300;
+
+
+`
+const MoviePopDescGenres = styled.ul`
+font-size: 14px;
+font-weight: 500;
+
+display: flex;
+flex-wrap: wrap;
+gap: 10px;
+`
+const Genre = styled.li``
+const MovieDetailClose = styled.span`
+position: absolute;
+inset: 0 0 auto auto;
+font-size: 30px;
+padding: 10px;
+background: tomato;
+`
+
+const MovieSlideWrapper = styled.div`
+position: relative;
+color: #fff;
+margin: 0 0 30px 0;
+`
+
+const MovieSlideLeftArrow = styled.span`
+position: absolute;
+inset: 50% auto auto 0;
+transform: translate(0,-50%);
+
+font-size: 30px;
+padding: 15px;
+background: rgba(0,0,0,0.5);
+`
+const MovieSlideRightArrow = styled.span`
+position: absolute;
+inset: 50% 0 auto auto;
+transform: translate(0,-50%);
+
+font-size: 30px;
+padding: 15px;
+background: rgba(0,0,0,0.5);
+`
+
+const InputResult = styled.div`
+margin: 20px 0;
+display: flex;
+justify-content: center;
+gap: 20px;
+color: #ddd;
+font-size: 13px;
+font-weight: 300;
+`
 
 
 // 1. 영화 만히 가져오기... list 버튼 만들기...
 // 2. 영화 클릭하면 자세한 정보 보여주기...
-// 3. 영화 슬라이드 만들기
+// 3. 영화 슬라이드 만들기 slick npm react-slick
 // 4. 영화 검색기능 만들기
 // 5. 장르 별로 보여주기....
 // 6. 로딩중 만들기...
@@ -119,70 +207,166 @@ transform: translate(-50%,-50%);
 
 const DetailMovie = ({ movie, on, setOn }) => {
     const { id } = useParams();
-    const detailMovie = movie.find(it => it.id == id);
-
-    const wheelStop = e => {
-        e.preventDefault();
+    // 1 === '1'
+    const detailMovie = movie.find(it => String(it.id) === id);
+    const cover = useRef();
+    //https://stackoverflow.com/questions/65455975/using-useref-addeventlistener 참조
+    // Useref는 rerender를 트리거하지 않고 useEffect 이전에 바인딩된 ref 객체입니다. 요소 없이 el.current를 사용하십시오.
+    const scrollHandler = e => {
+        e.preventDefault()
     }
-
-    const bg = useRef(null);
-
     useEffect(() => {
-        bg.current.addEventListener('wheel', wheelStop)
-    }, [id])
+        if (cover.current) {
+            cover.current.addEventListener('wheel', scrollHandler);
+            // return () => {
+            //     cover.current.removeEventListener("scroll", scrollHandler);
+            // };
+        }
+    }, [cover.current]);
 
     return (
         <>
             {
                 detailMovie && on &&
-                <MoviePopWrapper
-                    onClick={() => setOn(false)}
-                    // onWheel={wheelStop}
-                    ref={bg}
+                <MoviePopWapper
+
+                    ref={cover}
                 >
                     <MoviePop>
-                        <img src={detailMovie.large_cover_image} alt="" />
+                        <div>
+                            <img src={detailMovie.large_cover_image} alt="" />
+                        </div>
+                        <MoviePopDesc>
+                            <MoviePopDescTitle>{detailMovie.title}</MoviePopDescTitle>
+                            <MoviePopDescDesc>{detailMovie.description_full.substr(0, 400)}</MoviePopDescDesc>
+                            <MoviePopDescYear>{detailMovie.year}</MoviePopDescYear>
+                            <MoviePopDescGenres>
+                                {
+                                    detailMovie.genres?.map((it, idx) => {
+                                        return <Genre key={idx}>{it}</Genre>
+                                    })
+                                }
+                            </MoviePopDescGenres>
+                            <MovieDetailClose onClick={() => setOn(false)}><BsX /></MovieDetailClose>
+                        </MoviePopDesc>
                     </MoviePop>
-                </MoviePopWrapper>
+                </MoviePopWapper>
             }
         </>
     )
 }
 
+const SearchMovie = ({ search, on, setOn }) => {
+    const { id } = useParams();
+    // 1 === '1'
+    const detailMovie = search?.find(it => String(it.id) === id);
+    const cover = useRef();
+    //https://stackoverflow.com/questions/65455975/using-useref-addeventlistener 참조
+    // Useref는 rerender를 트리거하지 않고 useEffect 이전에 바인딩된 ref 객체입니다. 요소 없이 el.current를 사용하십시오.
+    const scrollHandler = e => {
+        e.preventDefault()
+    }
+    useEffect(() => {
+        if (cover.current) {
+            cover.current.addEventListener('wheel', scrollHandler);
+            // return () => {
+            //     cover.current.removeEventListener("scroll", scrollHandler);
+            // };
+        }
+    }, [cover.current]);
+
+
+
+
+    return (
+        <>
+            {
+                detailMovie && on &&
+                <MoviePopWapper
+
+                    ref={cover}
+                >
+                    <MoviePop>
+                        <div>
+                            <img src={detailMovie.large_cover_image} alt="" />
+                        </div>
+                        <MoviePopDesc>
+                            <MoviePopDescTitle>{detailMovie.title}</MoviePopDescTitle>
+                            <MoviePopDescDesc>{detailMovie.description_full.substr(0, 400)}</MoviePopDescDesc>
+                            <MoviePopDescYear>{detailMovie.year}</MoviePopDescYear>
+                            <MoviePopDescGenres>
+                                {
+                                    detailMovie.genres?.map((it, idx) => {
+                                        return <Genre key={idx}>{it}</Genre>
+                                    })
+                                }
+                            </MoviePopDescGenres>
+                            <MovieDetailClose onClick={() => setOn(false)}><BsX /></MovieDetailClose>
+                        </MoviePopDesc>
+                    </MoviePop>
+                </MoviePopWapper>
+            }
+        </>
+    )
+}
 
 const Movie = () => {
     //영화 데이타를 가져오기 (데이터는 시간이 걸리는 일이므로... 비동기식으로 처리한다.)
     //영화데이타를 그리기 state(리액터가 그려줄 수 있게)
 
     const [movie, setMovie] = useState([]);
-    //초기값이 없어서 에러 뜨는것 방지 useState([]);-> []넣음 배열이면 [] 객체면 {}
     const [movieList, setMovieList] = useState({});
     const [pageNum, setPageNum] = useState(0);
     const [list, setList] = useState(0);
     const [on, setOn] = useState(true);
+    const [search, setSearch] = useState([]);
+    const [inputList, setInputList] = useState();
+    const [input, setInput] = useState(null);
 
-    const limit = 30; // 50이하임..
+    const mainSlide = useRef(null);
+    const inputRef = useRef(null);
+
+    const limit = 36; // 50이하임..
     const pageLimit = 20;
     const listNum = Array.from({ length: parseInt(movieList.movie_count / limit) });
-    //페이지 버튼 1000개 만드는 방법  ---> movie_count: 48908 / limit
-    //parseInt -> 소수점 x 정수로 만드는
 
     const getMovie = async () => {
-        //axios==fetch axios는 .json 해줄필요없다
         const r = await axios.get(`https://yts.mx/api/v2/list_movies.json?limit=${limit}&page=${pageNum}`);
         setMovieList(r.data.data);
-        //.json 안쳐주는 대신 .data를 적어줘야함
         setMovie(r.data.data.movies);
+    }
+
+    const searchMovie = async () => {
+        const r = await axios.get(`https://yts.mx/api/v2/list_movies.json?query_term=${inputList}`);
+        setSearch(r.data.data.movies);
     }
 
     useEffect(() => {
         getMovie();
     }, [pageNum]);
-    //useEffect 데이터 가져오는걸 한번만 실행하라 [] 아무것도 없으면 1번실행, [pageNum] 넣으면 바뀔때 마다 실행
 
+    useEffect(() => {
+        searchMovie();
+    }, [inputList]);
 
+    const searchHandler = e => {
+        e.preventDefault();
+        if (input.length < 3) {
+            alert('더 입력하세요')
+            setInput('')
+            inputRef.current.focus(); //글자수 짧을때 경고창뜨고 커서 깜박이게
+            return
+        }
+        setInputList(input);
+        console.log(inputList);
+    } //새로고침 막는것
 
-    console.log(movie, movieList)
+    console.log(movie, movieList);
+
+    const MainSlideOption = {
+        slidesToShow: 7,
+        arrows: false,
+    }
 
     return (
         <Wapper>
@@ -190,15 +374,80 @@ const Movie = () => {
             <Header>
                 <H1>Lee's Movie</H1>
                 <MainTitle>It is a site that collects my favorite movies. Enjoy it.</MainTitle>
-                <form>
-                    <Input type="text" /><Button>SEARCH</Button>
+                <form onSubmit={searchHandler}>
+                    <Input
+                        type="text"
+                        value={input}
+                        onChange={e => setInput(e.target.value)}
+                        ref={inputRef}
+                    />
+                    <Button>SEARCH</Button>
                 </form>
+                <InputResult>
+                    {
+                        search &&
+                        search.map(it => {
+                            return (
+                                <Link to={`/search/${it.id}`}
+                                    onClick={() => setOn(true)}>
+                                    {it.title}
+                                </Link>
+                            )
+
+                        })
+
+                    }
+                </InputResult>
             </Header>
+
+            {/* MovieSlide */}
+            <MovieSlideWrapper>
+
+                <MovieSlide {...MainSlideOption} ref={mainSlide}>
+                    {
+                        movie.map((it, idx) => {
+                            return (
+                                <GridItm key={it.id} onClick={() => setOn(true)}>
+                                    <Link to={`/detail/${it.id}`}>
+                                        <Img src={it.large_cover_image}
+                                            alt={it.title}
+                                            onError={e => e.target.src = `${process.env.PUBLIC_URL}/cover.jpg`}
+                                        />
+                                        <Title>{it.title_long}</Title>
+                                        {
+                                            it.summary.length > 10 &&
+                                            <Desc>
+                                                {it.summary.substr(0, 100)}
+                                                {it.summary.length > 100 ? '...' : ''}
+                                            </Desc>
+                                        }
+                                    </Link>
+
+                                </GridItm>
+                            )
+                        })
+                    }
+                </MovieSlide>
+                <MovieSlideLeftArrow onClick={() => mainSlide.current.slickPrev()}><BsArrowLeft /></MovieSlideLeftArrow>
+                <MovieSlideRightArrow onClick={() => mainSlide.current.slickNext()}><BsArrowRight /></MovieSlideRightArrow>
+
+            </MovieSlideWrapper>
+
+
 
             <Routes>
                 <Route path="/" element={null} />
                 <Route path="/detail/:id" element={
-                <DetailMovie movie={movie} on={on} setOn={setOn} />
+                    <DetailMovie
+                        movie={movie}
+                        on={on}
+                        setOn={setOn} />
+                } />
+                <Route path="/search/:id" element={
+                    <SearchMovie
+                        search={search}
+                        on={on}
+                        setOn={setOn} />
                 } />
             </Routes>
 
@@ -209,9 +458,10 @@ const Movie = () => {
                     list > 1 &&
                     <ListBtn onClick={() => setList(list - pageLimit)}>PREV</ListBtn>
                 }
+
                 {
                     listNum.map((_, idx) => {
-                        return <ListBtn onClick={() => setPageNum(idx + 1)}>{idx + 1}</ListBtn>
+                        return <ListBtn onClick={() => setPageNum(idx + 1)} key={idx}>{idx + 1}</ListBtn>
                     }).slice(list, list + pageLimit)
                 }
                 {
@@ -231,14 +481,13 @@ const Movie = () => {
                                             <Img src={it.large_cover_image}
                                                 alt={it.title}
                                                 onError={e => e.target.src = `${process.env.PUBLIC_URL}/cover.jpg`}
-                                                 //사진없을때 대체하는 이미지 넣기
                                             />
                                             <Title>{it.title_long}</Title>
                                             {
-                                                it.description_full.length > 10 &&
+                                                it.summary.length > 10 &&
                                                 <Desc>
-                                                    {it.description_full.substr(0, 200)}
-                                                    {it.description_full.length > 200 ? '...' : ''}
+                                                    {it.summary.substr(0, 100)}
+                                                    {it.summary.length > 100 ? '...' : ''}
                                                 </Desc>
                                             }
                                         </Link>
@@ -256,5 +505,3 @@ const Movie = () => {
 }
 
 export default Movie;
-
-//https://yts.mx/api 영화 데이터
