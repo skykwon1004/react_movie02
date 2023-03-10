@@ -187,8 +187,9 @@ background: rgba(0,0,0,0.5);
 `
 
 const InputResult = styled.div`
-margin: 20px 0;
+margin: 20px 30px;
 display: flex;
+flex-wrap: wrap;
 justify-content: center;
 gap: 20px;
 color: #ddd;
@@ -321,7 +322,7 @@ const Movie = () => {
     const [on, setOn] = useState(true);
     const [search, setSearch] = useState([]);
     const [inputList, setInputList] = useState();
-    const [input, setInput] = useState(null);
+    const [input, setInput] = useState('');
 
     const mainSlide = useRef(null);
     const inputRef = useRef(null);
@@ -389,7 +390,8 @@ const Movie = () => {
                         search.map(it => {
                             return (
                                 <Link to={`/search/${it.id}`}
-                                    onClick={() => setOn(true)}>
+                                    onClick={() => setOn(true)} 
+                                    key={it.id}>
                                     {it.title}
                                 </Link>
                             )
